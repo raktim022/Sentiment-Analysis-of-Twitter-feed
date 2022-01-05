@@ -1,0 +1,34 @@
+import pandas as pd
+import re
+dt=pd.read_csv("final_dataset_basicmlmodel.csv")
+def cleaning(text):
+  text=re.sub(r"[^a-zA-Z\']"," ",text)
+  text=re.sub(r'[^\x00-\x7F]+',"",text)
+  text=text.lower()
+  return(text)
+dt['cleaned_text']=dt.tweet.apply(lambda x:cleaning(x))
+from wordcloud import STOPWORDS
+def gen_freq(text):
+  words=[]
+  for wrd in text.split():
+    words.extend(wrd)
+  freq=pd.Series(words).value_counts()
+  freq=freq.drop(STOPWORDS,errors="ignore")
+  return(freq)
+def neg(text):
+  for word in text:
+    if word in ["no","not","non","n"] or re.search(r"\wn't",word):
+      return 1
+    else:
+      return 0
+def is_question(words):
+    for word in words:
+        if word in ['when', 'what', 'how', 'why', 'who']:
+            return 1
+    else:
+        return 0
+word_freq=gen_freq(dt.cleaned_text.str)
+dt['word_count']=dt.cleaned_text.str.split().apply(lambda x:len(x))
+dt['neg']=dt.cleaned_text.str.split().apply(lambda x:neg(x))
+dt['ques']=dt.cleaned_text.str.split().apply(lambda x:is_question(x))
+dt.head()
